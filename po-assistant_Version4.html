@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Congressional Debate PO Assistant v4</title>
+    <style>
+        /* Congressional Debate PO Assistant v4 Styles */
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #c41e3a;
+            --success-color: #228b22;
+            --warning-color: #ffa500;
+            --danger-color: #dc3545;
+            --background: #f8f9fa;
+            --panel-bg: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --seat-empty: #e9ecef;
+            --seat-occupied: #d1ecf1;
+            --seat-speaking: #d4edda;
+            --seat-wants-speak: #fff3cd;
+            --seat-wants-question: #f8d7da;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .po-assistant {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .session-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .session-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .session-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .session-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .session-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .session-btn.pause-btn {
+            background: var(--warning-color);
+        }
+
+        .session-btn.pause-btn:hover:not(:disabled) {
+            background: #e6940a;
+        }
+
+        .session-time-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .session-time {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .session-status {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .session-status.paused {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .session-status.active {
+            background: var(--success-color);
+            color: white;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            grid-gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Panel Styles */
+        section {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        /* Classroom Layout */
+        .classroom-layout {
+            grid-column: 1 / 2;
+        }
+
+        .chamber-floor {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            min-height: 200px;
+        }
+
+        .senator-seat {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--seat-empty);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 0.5rem;
+            min-height: 60px;
+            position: relative;
+        }
+
+        .senator-seat:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .senator-seat.occupied {
+            background: var(--seat-occupied);
+            border-color: var(--primary-color);
+        }
+
+        .senator-seat.speaking {
+            background: var(--seat-speaking);
+            border-color: var(--success-color);
+            border-width: 3px;
+            animation: speaking-pulse 2s infinite;
+        }
+
+        .senator-seat.wants-speak {
+            background: var(--seat-wants-speak);
+            border-color: var(--warning-color);
+        }
+
+        .senator-seat.wants-question {
+            background: var(--seat-wants-question);
+            border-color: var(--danger-color);
+        }
+
+        @keyframes speaking-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34, 139, 34, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(34, 139, 34, 0); }
+        }
+
+        .seat-number {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            position: absolute;
+            top: 2px;
+            left: 4px;
+        }
+
+        .seat-name {
+            font-weight: bold;
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+        }
+
+        .seat-status {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+        }
+
+        /* Current Speaker Display */
+        .current-speaker {
+            background: var(--success-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .current-speaker h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .speaker-info {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .speech-type-info {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        /* Queue Styles */
+        .queue-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .queue-section h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .queue-list {
+            min-height: 80px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.5rem;
+            background: var(--background);
+        }
+
+        .queue-item {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .queue-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .queue-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 1rem;
+        }
+
+        .queue-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .queue-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .speaker-queue-btn {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .speaker-queue-btn:hover {
+            background: #e6940a;
+        }
+
+        .question-queue-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .question-queue-btn:hover {
+            background: #c82333;
+        }
+
+        .recognize-btn {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .recognize-btn:hover {
+            background: #1e7e34;
+        }
+
+        /* Speech Type Selector */
+        .speech-type-panel {
+            margin-bottom: 1rem;
+        }
+
+        .speech-type-selector {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .speech-info {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: var(--background);
+            padding: 0.5rem;
+            border-radius: 4px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Timer Panel */
+        .timer-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .time-remaining {
+            font-size: 3rem;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: var(--success-color);
+            margin-bottom: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .time-remaining.warning {
+            color: var(--warning-color);
+        }
+
+        .time-remaining.danger {
+            color: var(--danger-color);
+            animation: timer-pulse 1s infinite;
+        }
+
+        @keyframes timer-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .timer-status {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .speech-phase {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .timer-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .timer-btn {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .timer-btn:hover {
+            background: var(--background);
+        }
+
+        .timer-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Question Timer */
+        .question-timer {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .question-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .current-questioner {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Gavel Signals */
+        .gavel-signals {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1rem;
+        }
+
+        .signal-indicator {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .signal-indicator.active {
+            background: var(--warning-color);
+            color: white;
+            border-color: var(--warning-color);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Motion Panel */
+        .motion-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .motion-select {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+        }
+
+        .motion-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .motion-btn:hover {
+            background: #1e3d6f;
+        }
+
+        .current-motion {
+            background: var(--warning-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        /* Action Log */
+        .action-log {
+            grid-column: 1 / -1;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .log-entries {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 0.25rem;
+            padding: 0.25rem;
+            border-left: 3px solid transparent;
+        }
+
+        .log-system { border-left-color: var(--primary-color); }
+        .log-recognition { border-left-color: var(--success-color); }
+        .log-timer { border-left-color: var(--warning-color); }
+        .log-motion { border-left-color: var(--secondary-color); }
+
+        .log-time {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .log-message {
+            margin-left: 0.5rem;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: var(--shadow);
+        }
+
+        .notification-success { background-color: var(--success-color); }
+        .notification-warning { background-color: var(--warning-color); }
+        .notification-error { background-color: var(--danger-color); }
+        .notification-info { background-color: var(--primary-color); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .classroom-layout {
+                grid-column: 1;
+            }
+            
+            .action-log {
+                grid-column: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .po-assistant { padding: 10px; }
+            .session-header { flex-direction: column; gap: 1rem; }
+            .session-controls { flex-wrap: wrap; justify-content: center; }
+            .timer-controls { grid-template-columns: 1fr; }
+            .motion-controls { flex-direction: column; align-items: stretch; }
+            .chamber-floor { grid-template-columns: repeat(3, 1fr); }
+            .time-remaining { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="po-assistant">
+        <!-- Header -->
+        <header class="session-header">
+            <h1>Congressional Debate - PO Assistant v4</h1>
+            <div class="session-controls">
+                <button id="start-session" class="session-btn">Start Session</button>
+                <button id="pause-session" class="session-btn pause-btn" disabled>Pause Session</button>
+                <button id="end-session" class="session-btn" disabled>End Session</button>
+                <div class="session-time-info">
+                    <span class="session-time" id="session-timer">00:00:00</span>
+                    <span class="session-status" id="session-status">Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Classroom Layout Panel -->
+            <section class="classroom-layout">
+                <h2>Chamber Floor - Senate Seating</h2>
+                
+                <!-- Current Speaker Display -->
+                <div class="current-speaker" id="current-speaker-display">
+                    <h3>Currently Speaking</h3>
+                    <div class="speaker-info" id="current-speaker-info">No speaker recognized</div>
+                    <div class="speech-type-info" id="current-speech-type">-</div>
+                </div>
+
+                <!-- Chamber Floor Grid -->
+                <div class="chamber-floor" id="chamber-floor">
+                    <!-- 15 senator seats will be generated by JavaScript -->
+                </div>
+
+                <!-- Queue Management -->
+                <div class="queue-section">
+                    <h4>Speaker Queue</h4>
+                    <div class="queue-list" id="speaker-queue">
+                        <div class="queue-empty">No speakers queued</div>
+                    </div>
+                    <div class="queue-controls">
+                        <button id="recognize-speaker" class="queue-btn recognize-btn">Recognize Next Speaker</button>
+                    </div>
+                </div>
+
+                <div class="queue-section">
+                    <h4>Questioner Queue</h4>
+                    <div class="queue-list" id="questioner-queue">
+                        <div class="queue-empty">No questioners queued</div>
+                    </div>
+                    <div class="queue-controls">
+                        <button id="recognize-questioner" class="queue-btn recognize-btn">Recognize Next Questioner</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Timer Panel -->
+            <section class="timer-panel">
+                <h2>Debate Timer</h2>
+                
+                <!-- Speech Type Selector -->
+                <div class="speech-type-panel">
+                    <select id="speech-type" class="speech-type-selector">
+                        <option value="regular">Regular Speech (3:10 + 1:00)</option>
+                        <option value="authorship">Authorship (3:10 + 2:00)</option>
+                        <option value="sponsorship">Sponsorship (3:10 + 2:00)</option>
+                        <option value="first-neg">First Negation (3:10 + 2:00)</option>
+                        <option value="crystallization">Crystallization (2:00)</option>
+                    </select>
+                    <div class="speech-info" id="speech-info">
+                        Regular speech: 3 minutes 10 seconds + 1 minute questions
+                    </div>
+                </div>
+
+                <div class="timer-display">
+                    <div class="time-remaining" id="time-display">3:10</div>
+                    <div class="timer-status" id="timer-status">Timer Ready</div>
+                    <div class="speech-phase" id="speech-phase">Speech Phase</div>
+                </div>
+                
+                <div class="timer-controls">
+                    <button id="start-speech" class="timer-btn">Start Speech</button>
+                    <button id="start-questions" class="timer-btn">Start Questions</button>
+                    <button id="pause-timer" class="timer-btn">Pause Timer</button>
+                    <button id="reset-timer" class="timer-btn">Reset Timer</button>
+                </div>
+
+                <!-- Question Timer Section -->
+                <div class="question-timer" id="question-timer" style="display: none;">
+                    <div class="current-questioner" id="current-questioner">No questioner selected</div>
+                    <div class="timer-display">
+                        <div class="time-remaining" id="question-time-display">0:30</div>
+                    </div>
+                    <div class="question-controls">
+                        <button id="start-question" class="timer-btn">Start Question (30s)</button>
+                        <button id="next-questioner" class="timer-btn">Next Questioner</button>
+                    </div>
+                </div>
+                
+                <div class="gavel-signals">
+                    <div class="signal-indicator" id="three-minutes">3:00</div>
+                    <div class="signal-indicator" id="one-minute">1:00</div>
+                    <div class="signal-indicator" id="thirty-seconds">0:30</div>
+                    <div class="signal-indicator" id="time-up">Time</div>
+                </div>
+            </section>
+
+            <!-- Motion Panel -->
+            <section class="motion-panel">
+                <h2>Parliamentary Motions</h2>
+                <div class="current-motion" id="current-motion" style="display: none;">
+                    <h3>Motion on Floor</h3>
+                    <div class="motion-details" id="motion-details"></div>
+                </div>
+                
+                <div class="motion-controls">
+                    <select id="motion-type" class="motion-select">
+                        <option value="">Select Motion Type</option>
+                        <option value="suspend-rules">Suspend Rules</option>
+                        <option value="previous-question">Previous Question</option>
+                        <option value="table">Table Motion</option>
+                        <option value="postpone">Postpone</option>
+                        <option value="adjourn">Motion to Adjourn</option>
+                        <option value="recess">Motion for Recess</option>
+                    </select>
+                    <button id="recognize-motion" class="motion-btn">Recognize Motion</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Action Log -->
+        <section class="action-log">
+            <h3>Session Log</h3>
+            <div class="log-entries" id="session-log">
+                <div class="log-entry log-system">
+                    <span class="log-time">[--:--:--]</span>
+                    <span class="log-message">PO Assistant v4 Ready</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Global Application State
+        const POApp = {
+            // Session data
+            sessionActive: false,
+            sessionPaused: false,
+            sessionStartTime: null,
+            sessionPauseTime: null,
+            totalPausedTime: 0,
+            sessionTimer: null,
+            
+            // Chamber data
+            senators: Array(15).fill(null).map((_, i) => ({
+                id: i + 1,
+                name: '',
+                status: 'empty', // empty, occupied, speaking, wants-speak, wants-question
+                precedence: 0,
+                lastSpokenTime: null
+            })),
+            
+            // Queues
+            speakerQueue: [],
+            questionerQueue: [],
+            
+            // Current states
+            currentSpeaker: null,
+            currentQuestioner: null,
+            currentSpeechType: 'regular',
+            
+            // Timer
+            timer: {
+                timeRemaining: 190, // 3:10 default
+                isRunning: false,
+                interval: null,
+                phase: 'speech', // speech, questions, question-individual
+                maxTime: 190,
+                gracePeriod: true
+            },
+            
+            // Question timer
+            questionTimer: {
+                timeRemaining: 30,
+                isRunning: false,
+                interval: null,
+                maxTime: 30
+            },
+            
+            // Motion
+            currentMotion: null,
+            
+            // Speech type configurations
+            speechTypes: {
+                'regular': { speech: 190, questions: 60, questionTime: 30, name: 'Regular Speech' },
+                'authorship': { speech: 190, questions: 120, questionTime: 30, name: 'Authorship Speech' },
+                'sponsorship': { speech: 190, questions: 120, questionTime: 30, name: 'Sponsorship Speech' },
+                'first-neg': { speech: 190, questions: 120, questionTime: 30, name: 'First Negation Speech' },
+                'crystallization': { speech: 120, questions: 0, questionTime: 0, name: 'Crystallization Speech' }
+            }
+        };
+
+        // Utility Functions
+        function logEntry(message, type = 'system') {
+            const time = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('session-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-message">${message}</span>
+            `;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        function formatTime(seconds) {
+            const isNegative = seconds < 0;
+            const absSeconds = Math.abs(seconds);
+            const minutes = Math.floor(absSeconds / 60);
+            const secs = absSeconds % 60;
+            const timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
+            return isNegative ? `-${timeString}` : timeString;
+        }
+
+        // Chamber Floor Functions
+        function initializeChamberFloor() {
+            const chamberFloor = document.getElementById('chamber-floor');
+            chamberFloor.innerHTML = '';
+            
+            for (let i = 0; i < 15; i++) {
+                const seat = document.createElement('div');
+                seat.className = 'senator-seat';
+                seat.dataset.seatId = i;
+                seat.innerHTML = `
+                    <div class="seat-number">${i + 1}</div>
+                    <div class="seat-name">Empty</div>
+                    <div class="seat-status">Click to edit</div>
+                `;
+                
+                seat.addEventListener('click', () => handleSeatClick(i));
+                chamberFloor.appendChild(seat);
+            }
+            
+            updateChamberDisplay();
+        }
+
+        function handleSeatClick(seatId) {
+            const senator = POApp.senators[seatId];
+            
+            if (senator.status === 'empty') {
+                // Edit name
+                const name = prompt('Enter senator name:');
+                if (name && name.trim()) {
+                    senator.name = name.trim();
+                    senator.status = 'occupied';
+                    updateChamberDisplay();
+                    logEntry(`Added Senator ${name} to seat ${seatId + 1}`, 'system');
+                }
+            } else if (senator.status === 'occupied') {
+                // Show options
+                const action = prompt(`Senator ${senator.name} options:\n1. Add to Speaker Queue\n2. Add to Questioner Queue\n3. Edit Name\n4. Remove\n\nEnter number:`);
+                
+                switch (action) {
+                    case '1':
+                        addToSpeakerQueue(seatId);
+                        break;
+                    case '2':
+                        addToQuestionerQueue(seatId);
+                        break;
+                    case '3':
+                        const newName = prompt('Enter new name:', senator.name);
+                        if (newName && newName.trim()) {
+                            senator.name = newName.trim();
+                            updateChamberDisplay();
+                        }
+                        break;
+                    case '4':
+                        senator.name = '';
+                        senator.status = 'empty';
+                        senator.precedence = 0;
+                        senator.lastSpokenTime = null;
+                        updateChamberDisplay();
+                        logEntry(`Removed senator from seat ${seatId + 1}`, 'system');
+                        break;
+                }
+            } else if (senator.status === 'wants-speak') {
+                // Remove from speaker queue
+                removeFromSpeakerQueue(seatId);
+            } else if (senator.status === 'wants-question') {
+                // Remove from questioner queue
+                removeFromQuestionerQueue(seatId);
+            }
+        }
+
+        function addToSpeakerQueue(seatId) {
+            const senator = POApp.senators[seatId];
+            if (senator.status === 'occupied') {
+                senator.status = 'wants-speak';
+                POApp.speakerQueue.push(seatId);
+                updateChamberDisplay();
+                updateQueues();
+                logEntry(`${senator.name} added to speaker queue`, 'recognition');
+                showNotification(`${senator.name} added to speaker queue`, 'success');
+            }
+        }
+
+        function addToQuestionerQueue(seatId) {
+            const senator = POApp.senators[seatId];
+            if (senator.status === 'occupied') {
+                senator.status = 'wants-question';
+                POApp.questionerQueue.push(seatId);
+                updateChamberDisplay();
+                updateQueues();
+                logEntry(`${senator.name} added to questioner queue`, 'recognition');
+                showNotification(`${senator.name} added to questioner queue`, 'success');
+            }
+        }
+
+        function removeFromSpeakerQueue(seatId) {
+            const senator = POApp.senators[seatId];
+            const index = POApp.speakerQueue.indexOf(seatId);
+            if (index > -1) {
+                POApp.speakerQueue.splice(index, 1);
+                senator.status = 'occupied';
+                updateChamberDisplay();
+                updateQueues();
+                logEntry(`${senator.name} removed from speaker queue`, 'recognition');
+            }
+        }
+
+        function removeFromQuestionerQueue(seatId) {
+            const senator = POApp.senators[seatId];
+            const index = POApp.questionerQueue.indexOf(seatId);
+            if (index > -1) {
+                POApp.questionerQueue.splice(index, 1);
+                senator.status = 'occupied';
+                updateChamberDisplay();
+                updateQueues();
+                logEntry(`${senator.name} removed from questioner queue`, 'recognition');
+            }
+        }
+
+        function updateChamberDisplay() {
+            POApp.senators.forEach((senator, index) => {
+                const seat = document.querySelector(`[data-seat-id="${index}"]`);
+                if (seat) {
+                    seat.className = `senator-seat ${senator.status}`;
+                    
+                    const nameDiv = seat.querySelector('.seat-name');
+                    const statusDiv = seat.querySelector('.seat-status');
+                    
+                    if (senator.status === 'empty') {
+                        nameDiv.textContent = 'Empty';
+                        statusDiv.textContent = 'Click to edit';
+                    } else {
+                        nameDiv.textContent = senator.name;
+                        switch (senator.status) {
+                            case 'occupied':
+                                statusDiv.textContent = `${senator.precedence} speeches`;
+                                break;
+                            case 'speaking':
+                                statusDiv.textContent = 'Speaking';
+                                break;
+                            case 'wants-speak':
+                                statusDiv.textContent = 'Wants to speak';
+                                break;
+                            case 'wants-question':
+                                statusDiv.textContent = 'Wants to question';
+                                break;
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateQueues() {
+            // Update speaker queue
+            const speakerQueueDiv = document.getElementById('speaker-queue');
+            if (POApp.speakerQueue.length === 0) {
+                speakerQueueDiv.innerHTML = '<div class="queue-empty">No speakers queued</div>';
+            } else {
+                speakerQueueDiv.innerHTML = POApp.speakerQueue.map((seatId, index) => {
+                    const senator = POApp.senators[seatId];
+                    return `
+                        <div class="queue-item">
+                            <span>${index + 1}. ${senator.name}</span>
+                            <span>Seat ${seatId + 1}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Update questioner queue
+            const questionerQueueDiv = document.getElementById('questioner-queue');
+            if (POApp.questionerQueue.length === 0) {
+                questionerQueueDiv.innerHTML = '<div class="queue-empty">No questioners queued</div>';
+            } else {
+                questionerQueueDiv.innerHTML = POApp.questionerQueue.map((seatId, index) => {
+                    const senator = POApp.senators[seatId];
+                    return `
+                        <div class="queue-item">
+                            <span>${index + 1}. ${senator.name}</span>
+                            <span>Seat ${seatId + 1}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Session Functions
+        function startSession() {
+            POApp.sessionActive = true;
+            POApp.sessionPaused = false;
+            POApp.sessionStartTime = new Date();
+            POApp.totalPausedTime = 0;
+            
+            document.getElementById('start-session').disabled = true;
+            document.getElementById('pause-session').disabled = false;
+            document.getElementById('end-session').disabled = false;
+            
+            POApp.sessionTimer = setInterval(updateSessionTimer, 1000);
+            updateSessionTimer();
+            updateSessionStatus();
+            
+            logEntry('Session started', 'system');
+            showNotification('Session started successfully', 'success');
+        }
+
+        function pauseSession() {
+            if (POApp.sessionPaused) {
+                // Resume session
+                POApp.sessionPaused = false;
+                POApp.totalPausedTime += new Date() - POApp.sessionPauseTime;
+                POApp.sessionPauseTime = null;
+                
+                document.getElementById('pause-session').textContent = 'Pause Session';
+                updateSessionStatus();
+                
+                logEntry('Session resumed', 'system');
+                showNotification('Session resumed', 'info');
+            } else {
+                // Pause session
+                POApp.sessionPaused = true;
+                POApp.sessionPauseTime = new Date();
+                
+                document.getElementById('pause-session').textContent = 'Resume Session';
+                updateSessionStatus();
+                
+                logEntry('Session paused', 'system');
+                showNotification('Session paused', 'warning');
+            }
+        }
+
+        function endSession() {
+            POApp.sessionActive = false;
+            POApp.sessionPaused = false;
+            
+            document.getElementById('start-session').disabled = false;
+            document.getElementById('pause-session').disabled = true;
+            document.getElementById('pause-session').textContent = 'Pause Session';
+            document.getElementById('end-session').disabled = true;
+            
+            if (POApp.sessionTimer) {
+                clearInterval(POApp.sessionTimer);
+                POApp.sessionTimer = null;
+            }
+            
+            stopTimer();
+            stopQuestionTimer();
+            updateSessionStatus();
+            
+            logEntry('Session ended', 'system');
+            showNotification('Session ended', 'info');
+        }
+
+        function updateSessionTimer() {
+            if (!POApp.sessionStartTime) return;
+            
+            let elapsed;
+            if (POApp.sessionPaused) {
+                elapsed = Math.floor((POApp.sessionPauseTime - POApp.sessionStartTime - POApp.totalPausedTime) / 1000);
+            } else {
+                elapsed = Math.floor((new Date() - POApp.sessionStartTime - POApp.totalPausedTime) / 1000);
+            }
+            
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('session-timer').textContent = timeString;
+        }
+
+        function updateSessionStatus() {
+            const statusElement = document.getElementById('session-status');
+            let status = 'Ready';
+            
+            if (POApp.sessionActive) {
+                if (POApp.sessionPaused) {
+                    status = 'Paused';
+                    statusElement.className = 'session-status paused';
+                } else {
+                    status = 'Active';
+                    statusElement.className = 'session-status active';
+                }
+            } else {
+                statusElement.className = 'session-status';
+            }
+            
+            statusElement.textContent = status;
+        }
+
+        // Speech Type Functions
+        function updateSpeechType() {
+            const speechType = document.getElementById('speech-type').value;
+            POApp.currentSpeechType = speechType;
+            const config = POApp.speechTypes[speechType];
+            
+            document.getElementById('speech-info').textContent = 
+                `${config.name}: ${Math.floor(config.speech / 60)}:${(config.speech % 60).toString().padStart(2, '0')} speech` +
+                (config.questions > 0 ? ` + ${Math.floor(config.questions / 60)}:${(config.questions % 60).toString().padStart(2, '0')} questions` : ' (no questions)');
+            
+            // Reset timer to new speech length
+            POApp.timer.timeRemaining = config.speech;
+            POApp.timer.maxTime = config.speech;
+            updateTimerDisplay();
+        }
+
+        // Speaker Recognition Functions
+        function recognizeNextSpeaker() {
+            if (POApp.speakerQueue.length === 0) {
+                showNotification('No speakers in queue', 'warning');
+                return;
+            }
+            
+            // Clear current speaker
+            if (POApp.currentSpeaker !== null) {
+                POApp.senators[POApp.currentSpeaker].status = 'occupied';
+            }
+            
+            // Get next speaker
+            const nextSpeakerId = POApp.speakerQueue.shift();
+            const senator = POApp.senators[nextSpeakerId];
+            
+            POApp.currentSpeaker = nextSpeakerId;
+            senator.status = 'speaking';
+            senator.precedence++;
+            senator.lastSpokenTime = new Date();
+            
+            // Update displays
+            updateCurrentSpeaker();
+            updateChamberDisplay();
+            updateQueues();
+            
+            const config = POApp.speechTypes[POApp.currentSpeechType];
+            POApp.timer.timeRemaining = config.speech;
+            POApp.timer.maxTime = config.speech;
+            POApp.timer.phase = 'speech';
+            updateTimerDisplay();
+            
+            logEntry(`Recognized ${senator.name} for ${config.name}`, 'recognition');
+            showNotification(`Recognized ${senator.name}`, 'success');
+        }
+
+        function recognizeNextQuestioner() {
+            if (POApp.questionerQueue.length === 0) {
+                showNotification('No questioners in queue', 'warning');
+                return;
+            }
+            
+            // Clear current questioner
+            if (POApp.currentQuestioner !== null) {
+                POApp.senators[POApp.currentQuestioner].status = 'occupied';
+            }
+            
+            // Get next questioner
+            const nextQuestionerId = POApp.questionerQueue.shift();
+            const senator = POApp.senators[nextQuestionerId];
+            
+            POApp.currentQuestioner = nextQuestionerId;
+            senator.status = 'wants-question'; // Keep in questioning state
+            
+            document.getElementById('current-questioner').textContent = `${senator.name} (Seat ${nextQuestionerId + 1})`;
+            
+            // Reset question timer
+            const config = POApp.speechTypes[POApp.currentSpeechType];
+            POApp.questionTimer.timeRemaining = config.questionTime;
+            POApp.questionTimer.maxTime = config.questionTime;
+            updateQuestionTimerDisplay();
+            
+            updateQueues();
+            
+            logEntry(`Recognized ${senator.name} for questioning`, 'recognition');
+            showNotification(`Recognized ${senator.name} for question`, 'success');
+        }
+
+        function updateCurrentSpeaker() {
+            const speakerInfoDiv = document.getElementById('current-speaker-info');
+            const speechTypeDiv = document.getElementById('current-speech-type');
+            
+            if (POApp.currentSpeaker !== null) {
+                const senator = POApp.senators[POApp.currentSpeaker];
+                const config = POApp.speechTypes[POApp.currentSpeechType];
+                speakerInfoDiv.textContent = `${senator.name} (Seat ${POApp.currentSpeaker + 1})`;
+                speechTypeDiv.textContent = `${config.name} - Speech ${senator.precedence}`;
+            } else {
+                speakerInfoDiv.textContent = 'No speaker recognized';
+                speechTypeDiv.textContent = '-';
+            }
+        }
+
+        // Timer Functions
+        function startSpeechTimer() {
+            stopTimer();
+            stopQuestionTimer();
+            
+            POApp.timer.isRunning = true;
+            POApp.timer.phase = 'speech';
+            POApp.timer.interval = setInterval(speechTimerTick, 1000);
+            
+            document.getElementById('start-speech').classList.add('active');
+            document.getElementById('speech-phase').textContent = 'Speech Phase';
+            
+            const config = POApp.speechTypes[POApp.currentSpeechType];
+            logEntry(`Speech timer started (${formatTime(config.speech)})`, 'timer');
+            showNotification('Speech timer started', 'success');
+        }
+
+        function startQuestionsTimer() {
+            const config = POApp.speechTypes[POApp.currentSpeechType];
+            
+            if (config.questions === 0) {
+                showNotification('This speech type has no question period', 'warning');
+                return;
+            }
+            
+            stopTimer();
+            
+            POApp.timer.timeRemaining = config.questions;
+            POApp.timer.maxTime = config.questions;
+            POApp.timer.isRunning = true;
+            POApp.timer.phase = 'questions';
+            POApp.timer.interval = setInterval(speechTimerTick, 1000);
+            
+            document.getElementById('start-questions').classList.add('active');
+            document.getElementById('speech-phase').textContent = 'Questions Phase';
+            document.getElementById('question-timer').style.display = 'block';
+            
+            updateTimerDisplay();
+            
+            logEntry(`Questions timer started (${formatTime(config.questions)})`, 'timer');
+            showNotification('Questions timer started', 'success');
+        }
+
+        function startQuestionTimer() {
+            if (POApp.currentQuestioner === null) {
+                showNotification('No questioner selected', 'warning');
+                return;
+            }
+            
+            stopQuestionTimer();
+            
+            POApp.questionTimer.isRunning = true;
+            POApp.questionTimer.interval = setInterval(questionTimerTick, 1000);
+            
+            document.getElementById('start-question').classList.add('active');
+            
+            logEntry('Individual question timer started (30s)', 'timer');
+            showNotification('Question timer started', 'success');
+        }
+
+        function nextQuestioner() {
+            stopQuestionTimer();
+            
+            // Reset current questioner to occupied
+            if (POApp.currentQuestioner !== null) {
+                POApp.senators[POApp.currentQuestioner].status = 'occupied';
+                updateChamberDisplay();
+            }
+            
+            recognizeNextQuestioner();
+        }
+
+        function speechTimerTick() {
+            if (!POApp.timer.isRunning) return;
+            
+            POApp.timer.timeRemaining--;
+            updateTimerDisplay();
+            checkTimeSignals();
+        }
+
+        function questionTimerTick() {
+            if (!POApp.questionTimer.isRunning) return;
+            
+            POApp.questionTimer.timeRemaining--;
+            updateQuestionTimerDisplay();
+            
+            if (POApp.questionTimer.timeRemaining <= 0) {
+                stopQuestionTimer();
+                showNotification('Question time expired', 'warning');
+                logEntry('Question time expired', 'timer');
+            }
+        }
+
+        function checkTimeSignals() {
+            const time = POApp.timer.timeRemaining;
+            let signal = null;
+            
+            // Different signals based on speech length
+            if (POApp.timer.maxTime === 190) { // 3:10 speeches
+                switch (time) {
+                    case 180: // 3:00
+                        signal = 'three-minutes';
+                        break;
+                    case 60: // 1:00
+                        signal = 'one-minute';
+                        break;
+                    case 30: // 0:30
+                        signal = 'thirty-seconds';
+                        break;
+                    case 0: // Time up
+                        signal = 'time-up';
+                        break;
+                }
+            } else if (POApp.timer.maxTime === 120) { // 2:00 speeches
+                switch (time) {
+                    case 60: // 1:00
+                        signal = 'one-minute';
+                        break;
+                    case 30: // 0:30
+                        signal = 'thirty-seconds';
+                        break;
+                    case 0: // Time up
+                        signal = 'time-up';
+                        break;
+                }
+            }
+            
+            if (signal) {
+                activateSignal(signal);
+                logEntry(`Time signal: ${signal}`, 'timer');
+            }
+            
+            // Auto-stop at -10 seconds (grace period end)
+            if (time <= -10) {
+                stopTimer();
+                showNotification('Grace period ended', 'error');
+                logEntry('Grace period ended - timer stopped', 'timer');
+            }
+        }
+
+        function activateSignal(signal) {
+            document.querySelectorAll('.signal-indicator').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            const indicator = document.getElementById(signal);
+            if (indicator) {
+                indicator.classList.add('active');
+                setTimeout(() => indicator.classList.remove('active'), 3000);
+            }
+        }
+
+        function pauseTimer() {
+            if (POApp.timer.isRunning) {
+                POApp.timer.isRunning = false;
+                if (POApp.timer.interval) {
+                    clearInterval(POApp.timer.interval);
+                    POApp.timer.interval = null;
+                }
+                document.getElementById('pause-timer').textContent = 'Resume Timer';
+                logEntry('Timer paused', 'timer');
+                showNotification('Timer paused', 'info');
+            } else if (POApp.timer.timeRemaining !== 0) {
+                POApp.timer.isRunning = true;
+                POApp.timer.interval = setInterval(speechTimerTick, 1000);
+                document.getElementById('pause-timer').textContent = 'Pause Timer';
+                logEntry('Timer resumed', 'timer');
+                showNotification('Timer resumed', 'info');
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            stopQuestionTimer();
+            
+            const config = POApp.speechTypes[POApp.currentSpeechType];
+            POApp.timer.timeRemaining = config.speech;
+            POApp.timer.maxTime = config.speech;
+            POApp.timer.phase = 'speech';
+            
+            document.getElementById('question-timer').style.display = 'none';
+            document.getElementById('speech-phase').textContent = 'Speech Phase';
+            
+            updateTimerDisplay();
+            logEntry('Timer reset', 'timer');
+            showNotification('Timer reset', 'info');
+        }
+
+        function stopTimer() {
+            POApp.timer.isRunning = false;
+            if (POApp.timer.interval) {
+                clearInterval(POApp.timer.interval);
+                POApp.timer.interval = null;
+            }
+            
+            document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('pause-timer').textContent = 'Pause Timer';
+            
+            document.querySelectorAll('.signal-indicator').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+
+        function stopQuestionTimer() {
+            POApp.questionTimer.isRunning = false;
+            if (POApp.questionTimer.interval) {
+                clearInterval(POApp.questionTimer.interval);
+                POApp.questionTimer.interval = null;
+            }
+            
+            document.getElementById('start-question').classList.remove('active');
+        }
+
+        function updateTimerDisplay() {
+            const timeDisplay = document.getElementById('time-display');
+            const statusDisplay = document.getElementById('timer-status');
+            
+            timeDisplay.textContent = formatTime(POApp.timer.timeRemaining);
+            
+            // Color coding with grace period
+            timeDisplay.className = 'time-remaining';
+            if (POApp.timer.timeRemaining < 0) {
+                timeDisplay.classList.add('danger');
+            } else if (POApp.timer.timeRemaining <= 30) {
+                timeDisplay.classList.add('warning');
+            }
+            
+            // Status
+            let status = 'Timer Ready';
+            if (POApp.timer.isRunning) {
+                if (POApp.timer.phase === 'speech') {
+                    status = 'Speech in Progress';
+                } else if (POApp.timer.phase === 'questions') {
+                    status = 'Questions in Progress';
+                }
+            } else if (POApp.timer.timeRemaining < 0) {
+                status = 'Grace Period';
+            } else if (POApp.timer.timeRemaining < POApp.timer.maxTime && POApp.timer.timeRemaining > 0) {
+                status = 'Paused';
+            }
+            
+            statusDisplay.textContent = status;
+        }
+
+        function updateQuestionTimerDisplay() {
+            const timeDisplay = document.getElementById('question-time-display');
+            timeDisplay.textContent = formatTime(Math.max(0, POApp.questionTimer.timeRemaining));
+            
+            // Color coding
+            if (POApp.questionTimer.timeRemaining <= 10) {
+                timeDisplay.style.color = '#dc3545';
+            } else {
+                timeDisplay.style.color = '#2c5aa0';
+            }
+        }
+
+        // Motion Functions
+        function recognizeMotion() {
+            const motionType = document.getElementById('motion-type').value;
+            if (!motionType) {
+                showNotification('Please select a motion type', 'warning');
+                return;
+            }
+            
+            const motionNames = {
+                'suspend-rules': 'Suspend Rules',
+                'previous-question': 'Previous Question',
+                'table': 'Table Motion',
+                'postpone': 'Postpone',
+                'adjourn': 'Motion to Adjourn',
+                'recess': 'Motion for Recess'
+            };
+            
+            POApp.currentMotion = motionType;
+            document.getElementById('current-motion').style.display = 'block';
+            document.getElementById('motion-details').textContent = motionNames[motionType];
+            
+            logEntry(`Motion recognized: ${motionNames[motionType]}`, 'motion');
+            showNotification(`Motion: ${motionNames[motionType]}`, 'info');
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            // Session controls
+            document.getElementById('start-session').addEventListener('click', startSession);
+            document.getElementById('pause-session').addEventListener('click', pauseSession);
+            document.getElementById('end-session').addEventListener('click', endSession);
+            
+            // Speech type
+            document.getElementById('speech-type').addEventListener('change', updateSpeechType);
+            
+            // Speaker recognition
+            document.getElementById('recognize-speaker').addEventListener('click', recognizeNextSpeaker);
+            document.getElementById('recognize-questioner').addEventListener('click', recognizeNextQuestioner);
+            
+            // Timer controls
+            document.getElementById('start-speech').addEventListener('click', startSpeechTimer);
+            document.getElementById('start-questions').addEventListener('click', startQuestionsTimer);
+            document.getElementById('pause-timer').addEventListener('click', pauseTimer);
+            document.getElementById('reset-timer').addEventListener('click', resetTimer);
+            
+            // Question timer controls
+            document.getElementById('start-question').addEventListener('click', startQuestionTimer);
+            document.getElementById('next-questioner').addEventListener('click', nextQuestioner);
+            
+            // Motion controls
+            document.getElementById('recognize-motion').addEventListener('click', recognizeMotion);
+        }
+
+        // Initialize Application
+        function initializeApp() {
+            setupEventListeners();
+            initializeChamberFloor();
+            updateSpeechType();
+            updateTimerDisplay();
+            updateQueues();
+            updateCurrentSpeaker();
+            
+            logEntry('Congressional Debate PO Assistant v4 initialized', 'system');
+        }
+
+        // Start the application when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
