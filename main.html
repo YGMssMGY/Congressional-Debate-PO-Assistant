@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Congressional Debate PO Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .quick-access {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #2c3e50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            background: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar {
+            background: #2c3e50;
+            padding: 30px 0;
+            color: white;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 15px 30px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #34495e;
+            border-left-color: #3498db;
+            color: white;
+        }
+
+        .content-area {
+            padding: 30px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #34495e;
+            margin: 25px 0 15px 0;
+            font-size: 1.3em;
+        }
+
+        .highlight-box {
+            background: #e8f4fd;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fdf2e8;
+            border-left: 5px solid #e67e22;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #e8f5e8;
+            border-left: 5px solid #27ae60;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .motion-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .motion-table th,
+        .motion-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .motion-table th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        .motion-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .timer-section {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .timer-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .timer-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .timer-btn:hover {
+            background: #2980b9;
+        }
+
+        .timer-btn.stop {
+            background: #e74c3c;
+        }
+
+        .timer-btn.stop:hover {
+            background: #c0392b;
+        }
+
+        .tracking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .speaker-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .speaker-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .speaker-stats {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+                padding: 20px;
+            }
+            
+            .nav-item {
+                display: inline-block;
+                margin: 5px;
+                padding: 10px 15px;
+                border-radius: 5px;
+                border-left: none;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .timer-display {
+                font-size: 2em;
+            }
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .phrase-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .phrase-category {
+            margin-bottom: 20px;
+        }
+
+        .phrase-category h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .phrase {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+            font-style: italic;
+        }
+
+        /* PO Control Panel Styles */
+        .setup-panel {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .setup-controls {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .input-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .setup-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .setup-btn:hover {
+            background: #219a52;
+        }
+
+        .active-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .timer-section {
+            background: #2c3e50;
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .timer-status {
+            margin: 15px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+            min-height: 25px;
+        }
+
+        .current-activity {
+            background: #3498db;
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .current-speaker-display {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .role-selection {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .role-selection label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .role-selection select {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            background: white;
+            color: #2c3e50;
+        }
+
+        .current-questioner-display {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .questioner-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .questioner-label {
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .questioner-timer {
+            background: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .senator-lists-container {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .senator-list-container {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .questioning-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        .list-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #2980b9;
+        }
+
+        .control-btn.warning {
+            background: #e67e22;
+        }
+
+        .control-btn.warning:hover {
+            background: #d35400;
+        }
+
+        .senator-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .senator-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .senator-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .senator-item.selected {
+            background: #e8f4fd;
+            border-left-color: #2980b9;
+            box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .senator-item.next-priority {
+            background: #d5f4e6;
+            border-left-color: #27ae60;
+            font-weight: bold;
+        }
+
+        .senator-item.questioning-selected {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .senator-item.questioning-active {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(23, 162, 184, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(23, 162, 184, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(23, 162, 184, 0); }
+        }
+
+        .senator-info {
+            flex: 1;
+        }
+
+        .senator-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .senator-stats {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .priority-indicator {
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .priority-indicator.next {
+            background: #27ae60;
+        }
+
+        .session-stats {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .active-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .senator-lists-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .list-controls {
+                justify-content: center;
+            }
+            
+            .control-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Congressional Debate PO Assistant</h1>
+            <p class="subtitle">Your comprehensive guide for presiding over Congressional Debate sessions</p>
+            
+            <div class="quick-access">
+                <button class="quick-btn" onclick="showSection('timer')">🎛️ PO Control Panel</button>
+                <button class="quick-btn" onclick="showSection('tracking')">📊 Speaker Tracking</button>
+                <button class="quick-btn" onclick="showSection('motions')">⚖️ Parliamentary Motions</button>
+                <button class="quick-btn" onclick="showSection('phrases')">💬 Quick Phrases</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <nav class="sidebar">
+                <a href="#" class="nav-item active" onclick="showSection('role')">Understanding the Role</a>
+                <a href="#" class="nav-item" onclick="showSection('election')">Getting Elected</a>
+                <a href="#" class="nav-item" onclick="showSection('opening')">Opening Session</a>
+                <a href="#" class="nav-item" onclick="showSection('speakers')">Recognizing Speakers</a>
+                <a href="#" class="nav-item" onclick="showSection('questioning')">Questioning Periods</a>
+                <a href="#" class="nav-item" onclick="showSection('motions')">Parliamentary Procedure</a>
+                <a href="#" class="nav-item" onclick="showSection('agenda')">Setting Agenda</a>
+                <a href="#" class="nav-item" onclick="showSection('tracking')">Speaker Tracking</a>
+                <a href="#" class="nav-item" onclick="showSection('judges')">Working with Judges</a>
+                <a href="#" class="nav-item" onclick="showSection('order')">Maintaining Order</a>
+                <a href="#" class="nav-item" onclick="showSection('timer')">PO Control Panel</a>
+                <a href="#" class="nav-item" onclick="showSection('phrases')">Quick Phrases</a>
+                <a href="#" class="nav-item" onclick="showSection('resources')">Resources</a>
+            </nav>
+
+            <main class="content-area">
+                <!-- Section 1: Understanding the Role -->
+                <section id="role" class="section active">
+                    <h2>Understanding the Role of the Presiding Officer</h2>
+                    
+                    <div class="highlight-box">
+                        <h3>What is a Presiding Officer?</h3>
+                        <p>The Presiding Officer (PO) is the <strong>leader who runs meetings by recognizing members to speak or move</strong>. Also called <strong>the chair</strong>, this role is modeled after the Speaker of the House of Representatives, or the Vice President or President pro tempore of the Senate.</p>
+                    </div>
+
+                    <h3>Main Responsibilities</h3>
+                    <ul>
+                        <li><strong>Facilitating debate</strong> through recognizing speeches, questions, and motions in a fair and efficient manner</li>
+                        <li><strong>Fostering order and trust</strong> within the chamber</li>
+                        <li><strong>Maintaining parliamentary procedure</strong> and ensuring fairness</li>
+                        <li><strong>Managing time</strong> and keeping the session flowing smoothly</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <h3>Important Note</h3>
+                        <p>POs <strong>sacrifice their opportunity to speak in service to colleagues</strong>. Effective POs foster order and trust, while weak POs erode a chamber's capacity for meaningful debate.</p>
+                    </div>
+
+                    <h3>Key Principles</h3>
+                    <ol>
+                        <li><strong>Fairness:</strong> Ensure equal opportunity for all participants</li>
+                        <li><strong>Efficiency:</strong> Keep the session moving at an appropriate pace</li>
+                        <li><strong>Accuracy:</strong> Apply parliamentary procedure correctly</li>
+                        <li><strong>Neutrality:</strong> Remain impartial throughout the session</li>
+                    </ol>
+                </section>
+
+                <!-- Section 2: Getting Elected -->
+                <section id="election" class="section">
+                    <h2>Getting Elected as PO</h2>
+                    
+                    <h3>Election Process</h3>
+                    <div class="highlight-box">
+                        <ol>
+                            <li><strong>Nomination:</strong> A fellow competitor must first nominate you</li>
+                            <li><strong>Voting:</strong> A majority of the chamber must vote for you</li>
+                            <li><strong>Single ballot election</strong> is used</li>
+                            <li><strong>Runoff elections</strong> may occur if there are more than two candidates</li>
+                        </ol>
+                    </div>
+
+                    <h3>The Presiding Officer Speech</h3>
+                    <p>During election, you'll give a brief speech (usually 30 seconds to 1 minute). Include:</p>
+                    
+                    <ul>
+                        <li><strong>List your qualifications:</strong> tournaments PO'ed, practice rounds</li>
+                        <li><strong>State a compelling reason</strong> why they should vote for you</li>
+                        <li><strong>Highlight key attributes:</strong> fair, efficient, accurate, smooth flow</li>
+                        <li><strong>Show personality</strong> and have fun with it</li>
+                    </ul>
+
+                    <div class="success-box">
+                        <h3>Pro Tip</h3>
+                        <p><strong>Talk to peers beforehand</strong> to secure nominations and votes. Remember, Congress is a social event!</p>
+                    </div>
+
+                    <h3>Sample PO Speech</h3>
+                    <div class="phrase-list">
+                        <p><em>"Fellow legislators, I'm running for Presiding Officer because I have experience from [X tournaments], understand parliamentary procedure, and am committed to running a fair and efficient session. I will recognize speakers based on precedence and recency, maintain order, and ensure everyone has equal opportunity to participate. Thank you for your consideration."</em></p>
+                    </div>
+                </section>
+
+                <!-- Section 3: Opening Session -->
+                <section id="opening" class="section">
+                    <h2>Opening the Session</h2>
+                    
+                    <h3>Immediate Steps After Election</h3>
+                    <div class="highlight-box">
+                        <ol>
+                            <li>Say: <strong>"This chamber will come to order"</strong></li>
+                            <li>State your intention to <strong>recognize speakers fairly and balanced around the chamber</strong></li>
+                            <li><strong>Explain procedures</strong> clearly</li>
+                            <li>Describe your <strong>gavel time signals</strong></li>
+                        </ol>
+                    </div>
+
+                    <h3>Gavel Signals</h3>
+                    <div class="motion-table">
+                        <table style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Signal</th>
+                                    <th>Meaning</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1 strong tap</strong></td>
+                                    <td>Call meeting to order / End questioning</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>1 tap</strong></td>
+                                    <td>1 minute remaining</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2 taps</strong></td>
+                                    <td>30 seconds remaining</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3 taps</strong></td>
+                                    <td>Time elapsed</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Multiple taps</strong></td>
+                                    <td>Grace period ended (3:10 max)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="warning-box">
+                        <h3>Important Reminders</h3>
+                        <ul>
+                            <li><strong>You will not call for motions</strong> at any time</li>
+                            <li>Speakers should seek recognition when they wish to move something</li>
+                            <li>Be <strong>visible</strong> when addressing the chamber (stand)</li>
+                            <li>Use a <strong>calm, controlled, and caring voice</strong></li>
+                        </ul>
+                    </div>
+
+                    <h3>Sample Opening Statement</h3>
+                    <div class="phrase-list">
+                        <p><em>"This chamber will come to order. I will use my best effort to recognize speakers fairly and balanced around the chamber. I will recognize based on precedence and recency. My gavel signals are: one tap for one minute remaining, two taps for thirty seconds, three taps for time elapsed. I will not call for motions - please seek recognition if you wish to move something."</em></p>
+                    </div>
+                </section>
+
+                <!-- Section 4: Recognizing Speakers -->
+                <section id="speakers" class="section">
+                    <h2>Managing Debate: Recognizing Speakers</h2>
+                    
+                    <h3>Basic Recognition Rules</h3>
+                    <div class="highlight-box">
+                        <p>Legislators <strong>stand if they wish to be recognized to speak</strong>.</p>
+                    </div>
+
+                    <h3>Speaker Recognition Priority</h3>
+                    <ol>
+                        <li><strong>First:</strong> Students who have not spoken during the session</li>
+                        <li><strong>Next:</strong> Students who have spoken fewer times (precedence)</li>
+                        <li><strong>Then:</strong> Students who spoke earlier (least recently - recency)</li>
+                    </ol>
+
+                    <div class="warning-box">
+                        <h3>Critical Rules</h3>
+                        <ul>
+                            <li><strong>Precedence and recency should NOT reset during a session</strong></li>
+                            <li><strong>They SHOULD reset when a new session begins</strong> with a new PO</li>
+                            <li><strong>Authors have priority</strong> when introducing their legislation</li>
+                        </ul>
+                    </div>
+
+                    <h3>Authorship Exception</h3>
+                    <p>When a speaker has <strong>authorship privileges</strong> to legislation being introduced, <strong>the presiding officer must recognize the author first</strong>, regardless of precedence/recency.</p>
+
+                    <h3>Recognition Phrases</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-category">
+                            <h4>Standard Recognition:</h4>
+                            <div class="phrase">"The chair recognizes Senator [Last Name]"</div>
+                            <div class="phrase">"The chair recognizes Representative [Last Name]"</div>
+                        </div>
+                    </div>
+
+                    <div class="success-box">
+                        <h3>Remember</h3>
+                        <p>The <strong>elected presiding officer may not give a speech while presiding</strong>, unless tournament rules specifically allow it. PO service for two hours counts as two speeches for precedence/recency tracking.</p>
+                    </div>
+                </section>
+
+                <!-- Section 5: Questioning Periods -->
+                <section id="questioning" class="section">
+                    <h2>Managing Debate: Questioning Periods</h2>
+                    
+                    <h3>Questioning Time Limits</h3>
+                    <div class="motion-table">
+                        <table style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Speech Type</th>
+                                    <th>Questioning Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Authorship/Sponsorship</td>
+                                    <td><strong>2 minutes</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>First Negative</td>
+                                    <td><strong>2 minutes</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>All Other Speeches</td>
+                                    <td><strong>1 minute</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Key Questioning Rules</h3>
+                    <div class="highlight-box">
+                        <ul>
+                            <li><strong>Only the presiding officer recognizes</strong> legislators who wish to question</li>
+                            <li><strong>One question at a time</strong> - multiple-part questions are NOT allowed</li>
+                            <li><strong>No permission needed</strong> to yield - it's implied by the questioning period</li>
+                        </ul>
+                    </div>
+
+                    <h3>Direct Questioning Format</h3>
+                    <p>Alternative format used at some tournaments (often elimination rounds):</p>
+                    <ul>
+                        <li>Questioning periods broken into <strong>30-second segments</strong></li>
+                        <li>One questioner per segment who <strong>may ask multiple questions</strong></li>
+                        <li>Keep <strong>separate questioning precedence/recency</strong></li>
+                        <li>At 30 seconds: <strong>double tap gavel</strong> and call next questioner</li>
+                        <li><strong>No grace period</strong> in questioning</li>
+                    </ul>
+
+                    <h3>Ending Questioning</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-category">
+                            <h4>Ending Phrases:</h4>
+                            <div class="phrase">"The questioning period has concluded, and the speaker may be seated"</div>
+                        </div>
+                    </div>
+
+                    <div class="success-box">
+                        <h3>Tips for Speakers</h3>
+                        <ul>
+                            <li><strong>Answer succinctly</strong> and don't avoid questions</li>
+                            <li>If you don't know, <strong>redirect to what you do know</strong></li>
+                            <li><strong>Paraphrase</strong> if you don't understand the question</li>
+                            <li><strong>Thank the presiding officer</strong> when recognized</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- PO Control Panel Section -->
+                <section id="timer" class="section">
+                    <h2>🎛️ PO Control Panel</h2>
+                    
+                    <!-- Setup Phase -->
+                    <div id="setupPhase" class="setup-panel">
+                        <h3>📝 Session Setup</h3>
+                        <div class="setup-controls">
+                            <div class="input-group">
+                                <label for="senatorNames">Enter all Senator names (one per line):</label>
+                                <textarea id="senatorNames" placeholder="Senator Smith&#10;Senator Johnson&#10;Senator Williams&#10;Senator Brown&#10;Senator Davis&#10;Senator Miller&#10;Senator Wilson&#10;Senator Moore&#10;Senator Taylor" rows="6"></textarea>
+                            </div>
+                            <button class="setup-btn" onclick="initializeSession()">🚀 Start Session</button>
+                        </div>
+                    </div>
+
+                    <!-- Active Session Phase -->
+                    <div id="activeSession" class="active-panel" style="display: none;">
+                        <!-- Timer Section -->
+                        <div class="timer-section">
+                            <div class="timer-display" id="timerDisplay">3:00</div>
+                            <div id="timerStatus" class="timer-status"></div>
+                            <div class="timer-controls">
+                                <button class="timer-btn" onclick="startSpeechTimer()">🎤 Start Speech (3:00)</button>
+                                <button class="timer-btn" onclick="startQuestioningTimer()">❓ Start Questioning</button>
+                                <button class="timer-btn" id="pauseResumeBtn" onclick="togglePauseResume()">⏸️ Pause</button>
+                                <button class="timer-btn stop" onclick="resetTimer()">⏹️ Reset</button>
+                            </div>
+                        </div>
+
+                        <!-- Current Activity -->
+                        <div class="current-activity">
+                            <h3 id="currentActivityTitle">🎤 Ready for Next Speaker</h3>
+                            <div id="currentSpeaker" class="current-speaker-display">
+                                Select a speaker to begin
+                            </div>
+                            
+                            <!-- Speaker Role Selection -->
+                            <div id="speakerRoleSelection" class="role-selection" style="display: none;">
+                                <label>Speaker Role:</label>
+                                <select id="speakerRole">
+                                    <option value="author">Author/Sponsor (2min Q)</option>
+                                    <option value="firstneg">First Negative (2min Q)</option>
+                                    <option value="regular">Regular Speech (1min Q)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Current Questioner Display -->
+                            <div id="currentQuestioner" class="current-questioner-display" style="display: none;">
+                                <div class="questioner-info">
+                                    <span class="questioner-label">Current Questioner:</span>
+                                    <span id="questionerName">None</span>
+                                    <span id="questionerTimer" class="questioner-timer">30s</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Senator Lists -->
+                        <div class="senator-lists-container">
+                            <!-- Speaking List -->
+                            <div class="senator-list-container">
+                                <h3>🎤 Speaker Priority List</h3>
+                                <div class="list-controls">
+                                    <button class="control-btn" onclick="markSpeech()">✅ Mark Speech Complete</button>
+                                    <button class="control-btn warning" onclick="resetSession()">🔄 Reset Session</button>
+                                </div>
+                                <div id="senatorList" class="senator-list">
+                                    <!-- Senators will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Questioning List -->
+                            <div class="senator-list-container" id="questioningContainer" style="display: none;">
+                                <h3>❓ Questioner Priority List</h3>
+                                <div class="list-controls">
+                                    <button class="control-btn" onclick="startQuestioningMode()">🚀 Start Questioning</button>
+                                    <button class="control-btn" onclick="endQuestioningMode()">⏹️ End Questioning</button>
+                                </div>
+                                <div class="questioning-info">
+                                    <p><strong>Instructions:</strong> Click senators to add them to questioning queue. Selected senators will be highlighted in yellow.</p>
+                                </div>
+                                <div id="questionerList" class="senator-list">
+                                    <!-- Questioners will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Session Statistics -->
+                        <div class="session-stats">
+                            <h3>📊 Session Statistics</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Speeches:</span>
+                                    <span id="totalSpeeches" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Total Questions:</span>
+                                    <span id="totalQuestions" class="stat-value">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Current Legislation:</span>
+                                    <span id="currentLegislation" class="stat-value">Item 1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Parliamentary Motions Section -->
+                <section id="motions" class="section">
+                    <h2>Managing Debate: Parliamentary Procedure and Motions</h2>
+                    
+                    <div class="warning-box">
+                        <h3>Key Principle</h3>
+                        <p>The PO <strong>should not call for motions</strong> but should pause briefly between speeches to recognize those seeking recognition to move.</p>
+                    </div>
+
+                    <h3>Recognition for Motions</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-category">
+                            <h4>Recognition Phrases:</h4>
+                            <div class="phrase">"The chair recognizes [Name]"</div>
+                            <div class="phrase">"State your point/question"</div>
+                        </div>
+                        <div class="phrase-category">
+                            <h4>Calling for Second:</h4>
+                            <div class="phrase">"Is there a second?"</div>
+                        </div>
+                        <div class="phrase-category">
+                            <h4>Stating Motion:</h4>
+                            <div class="phrase">"It is moved and seconded that..."</div>
+                        </div>
+                    </div>
+
+                    <h3>Common Parliamentary Motions</h3>
+                    <div class="motion-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Motion</th>
+                                    <th>Purpose</th>
+                                    <th>Second Required</th>
+                                    <th>Vote Required</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Previous Question</strong></td>
+                                    <td>Close debate on current issue</td>
+                                    <td>Yes</td>
+                                    <td>2/3 majority</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Lay on the Table</strong></td>
+                                    <td>Set aside current issue</td>
+                                    <td>Yes</td>
+                                    <td>Majority</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Recess</strong></td>
+                                    <td>Dismiss for specific time</td>
+                                    <td>Yes</td>
+                                    <td>Majority</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Adjourn</strong></td>
+                                    <td>Dismiss the meeting</td>
+                                    <td>Yes</td>
+                                    <td>Majority</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Amend</strong></td>
+                                    <td>Propose specific change</td>
+                                    <td>1/3 of members</td>
+                                    <td>Majority</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Point of Order</strong></td>
+                                    <td>Question procedure</td>
+                                    <td>No</td>
+                                    <td>Chair rules</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Personal Privilege</strong></td>
+                                    <td>Address personal matter</td>
+                                    <td>No</td>
+                                    <td>Chair rules</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Taking Votes</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-category">
+                            <h4>Voice Vote:</h4>
+                            <div class="phrase">"On the motion to [read motion title] those in favor, say aye. (Pause) Those opposed, say no."</div>
+                        </div>
+                        <div class="phrase-category">
+                            <h4>Rising Vote:</h4>
+                            <div class="phrase">"Those in favor... will rise/raise your hands. [Count]. Be seated. Those opposed... will rise. [Count]. Be seated."</div>
+                        </div>
+                        <div class="phrase-category">
+                            <h4>Announcing Results:</h4>
+                            <div class="phrase">"The motion [passes/fails] by a vote of [count]"</div>
+                            <div class="phrase">"The motion is adopted/carried" or "The motion is lost"</div>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box">
+                        <h3>Important Notes</h3>
+                        <ul>
+                            <li><strong>Previous Question</strong> protects minority voice - only recommend if debate is one-sided or repetitive</li>
+                            <li><strong>Amendments</strong> must be presented in writing and be "germane" (uphold original intent)</li>
+                            <li><strong>Points of Order/Parliamentary Inquiry:</strong> Say "State that point" or "What is your question?"</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Speaker Tracking Info Section -->
+                <section id="tracking" class="section">
+                    <h2>📊 Speaker & Questioner Tracking Guide</h2>
+                    
+                    <div class="highlight-box">
+                        <h3>Automated Tracking System</h3>
+                        <p>The <strong>PO Control Panel</strong> provides an integrated timer and tracking system that automatically reorders senators based on precedence and recency rules.</p>
+                    </div>
+
+                    <h3>How the System Works</h3>
+                    <ol>
+                        <li><strong>Setup:</strong> Enter all senator names at the beginning of the session</li>
+                        <li><strong>Automatic Ordering:</strong> The system automatically places the next speaker at the top</li>
+                        <li><strong>Precedence Priority:</strong> Senators with fewer speeches appear first</li>
+                        <li><strong>Recency Priority:</strong> Among those with equal speeches, least recent speakers appear first</li>
+                        <li><strong>Timer Integration:</strong> Timer automatically switches between speech and questioning modes</li>
+                    </ol>
+
+                    <div class="success-box">
+                        <h3>Key Features</h3>
+                        <ul>
+                            <li><strong>Real-time reordering</strong> after each speech or question</li>
+                            <li><strong>Visual priority indicators</strong> showing who should speak next</li>
+                            <li><strong>Automatic timer transitions</strong> from speech to questioning</li>
+                            <li><strong>Session statistics</strong> tracking total activity</li>
+                            <li><strong>One-click marking</strong> for speeches and questions</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-box">
+                        <h3>Usage Tips</h3>
+                        <ul>
+                            <li>Always use the <strong>PO Control Panel</strong> for live session management</li>
+                            <li>The senator at the <strong>top of the list</strong> should be recognized next</li>
+                            <li>Mark activities immediately to keep the list accurate</li>
+                            <li>Use the timer integration for seamless session flow</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Agenda Section -->
+                <section id="agenda" class="section">
+                    <h2>Setting the Agenda</h2>
+                    
+                    <div class="highlight-box">
+                        <h3>Importance</h3>
+                        <p><strong>Setting the agenda at the beginning of the session is important.</strong> Thoughtful discussion in caucusing helps avoid issues later.</p>
+                    </div>
+
+                    <h3>Methods for Setting Agenda</h3>
+                    <ol>
+                        <li><strong>Proposed Agendas:</strong> Offer proposed agendas and vote via single-ballot election until one receives majority</li>
+                        <li><strong>Agenda Committee:</strong> One representative from each school collaboratively determines order (binding unless rules suspended)</li>
+                        <li><strong>Issue-Based Committees:</strong> Several committees based on different issues</li>
+                    </ol>
+
+                    <h3>Key Considerations</h3>
+                    <ul>
+                        <li><strong>Place legislation with authors present</strong> in higher/earlier positions</li>
+                        <li>Once set, agenda is part of standing rules</li>
+                        <li><strong>Changing agenda requires motion to suspend rules</strong> (ill-advised)</li>
+                    </ul>
+
+                    <div class="phrase-list">
+                        <div class="phrase-category">
+                            <h4>Agenda Phrases:</h4>
+                            <div class="phrase">"The chair will now open the floor for docket/agenda nominations"</div>
+                            <div class="phrase">"The next item of business is [legislation title]"</div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box">
+                        <h3>Remember</h3>
+                        <p>Beyond laying an item on the table, changing the agenda requires suspending rules, which is generally <strong>ill-advised</strong>.</p>
+                    </div>
+                </section>
+
+                <!-- Judges Section -->
+                <section id="judges" class="section">
+                    <h2>Working with Judges and Parliamentarians</h2>
+                    
+                    <h3>Types of Judges</h3>
+                    <div class="motion-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Judge Type</th>
+                                    <th>Location</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Parliamentarian</strong></td>
+                                    <td>Sits with PO</td>
+                                    <td>Advises, evaluates holistically, ensures fairness</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Scorer</strong></td>
+                                    <td>Back/side of room</td>
+                                    <td>Evaluates speakers and PO</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Parliamentarian's Role</h3>
+                    <ul>
+                        <li><strong>Advising the PO when necessary</strong></li>
+                        <li>Ensuring fairness and supervising the chamber</li>
+                        <li><strong>Recommending whether amendments are germane</strong></li>
+                    </ul>
+
+                    <h3>PO Evaluation Standards</h3>
+                    <div class="highlight-box">
+                        <ol>
+                            <li><strong>Speaker Recognition:</strong> Fairness, consistency, distribution</li>
+                            <li><strong>Parliamentary Procedure:</strong> Command, accuracy, ruling quickly</li>
+                            <li><strong>Delivery/Presence:</strong> Fostering order/trust, vocal/physical presence, eloquence</li>
+                        </ol>
+                    </div>
+
+                    <div class="success-box">
+                        <h3>Working with Judges</h3>
+                        <ul>
+                            <li><strong>Consult the parliamentarian</strong> when necessary for accuracy</li>
+                            <li><strong>Be confident</strong> and handle mistakes professionally</li>
+                            <li><strong>Handle criticism with grace</strong> and apologize if necessary</li>
+                            <li><strong>Make judges' experience enjoyable</strong> and their life easier</li>
+                            <li>Adhere to time limits and clarify names for judges</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Order Section -->
+                <section id="order" class="section">
+                    <h2>Maintaining Order and Discipline</h2>
+                    
+                    <h3>Managing the Chamber</h3>
+                    <div class="phrase-list">
+                        <div class="phrase-category">
+                            <h4>Calling to Order:</h4>
+                            <div class="phrase">"I call this house to order"</div>
+                        </div>
+                        <div class="phrase-category">
+                            <h4>Handling Disruption:</h4>
+                            <div class="phrase">"Excuse me. Rep. [Name] you are out of order. Please do not [describe behavior] while a fellow competitor is speaking. Thank you."</div>
+                        </div>
+                        <div class="phrase-category">
+                            <h4>Formal Ruling (Serious Offense):</h4>
+                            <div class="phrase">"The member is out of order and will be seated"</div>
+                        </div>
+                        <div class="phrase-category">
+                            <h4>Incorrect Procedure:</h4>
+                            <div class="phrase">"The chair rules that the motion is out of order [or 'not in order'] because..."</div>
+                        </div>
+                    </div>
+
+                    <h3>Protocol and Respect</h3>
+                    <div class="highlight-box">
+                        <ul>
+                            <li>Legislators refer to PO as: <strong>Mr./Madam Chair, Speaker, or President</strong></li>
+                            <li>Legislators <strong>may not approach the front table</strong> without rising to a point of personal privilege</li>
+                            <li>Always be <strong>respectful of others</strong></li>
+                            <li>Motions ensuring fairness <strong>cannot be suspended</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-box">
+                        <h3>Key Principle</h3>
+                        <p>The PO's role in <strong>maintaining order</strong> is crucial for productive debate. Handle disruptions firmly but respectfully.</p>
+                    </div>
+                </section>
+
+                <!-- Quick Phrases Section -->
+                <section id="phrases" class="section">
+                    <h2>💬 Quick Phrases for POs</h2>
+                    
+                    <input type="text" class="search-box" id="phraseSearch" placeholder="Search phrases..." onkeyup="searchPhrases()">
+                    
+                    <div class="phrase-list" id="phrasesList">
+                        <div class="phrase-category">
+                            <h4>Opening Session:</h4>
+                            <div class="phrase">"This chamber will come to order"</div>
+                            <div class="phrase">"I will use my best effort to recognize speakers fairly and balanced around the chamber"</div>
+                            <div class="phrase">"I will not call for motions - please seek recognition if you wish to move something"</div>
+                        </div>
+
+                        <div class="phrase-category">
+                            <h4>Recognizing Speakers:</h4>
+                            <div class="phrase">"The chair recognizes Senator [Last Name]"</div>
+                            <div class="phrase">"The chair recognizes Representative [Last Name]"</div>
+                            <div class="phrase">"The chair recognizes the author/sponsor"</div>
+                        </div>
+
+                        <div class="phrase-category">
+                            <h4>Questioning:</h4>
+                            <div class="phrase">"The questioning period has concluded, and the speaker may be seated"</div>
+                            <div class="phrase">"The chair recognizes [Name] for a question"</div>
+                        </div>
+
+                        <div class="phrase-category">
+                            <h4>Parliamentary Procedure:</h4>
+                            <div class="phrase">"State your point/question"</div>
+                            <div class="phrase">"Is there a second?"</div>
+                            <div class="phrase">"It is moved and seconded that..."</div>
+                            <div class="phrase">"On the motion to [motion] those in favor, say aye. Those opposed, say no."</div>
+                            <div class="phrase">"The motion passes/fails"</div>
+                            <div class="phrase">"The motion is adopted" / "The motion is lost"</div>
+                        </div>
+
+                        <div class="phrase-category">
+                            <h4>Agenda Management:</h4>
+                            <div class="phrase">"The next item of business is [legislation title]"</div>
+                            <div class="phrase">"The chair will now open the floor for docket nominations"</div>
+                        </div>
+
+                        <div class="phrase-category">
+                            <h4>Maintaining Order:</h4>
+                            <div class="phrase">"I call this house to order"</div>
+                            <div class="phrase">"The member is out of order and will be seated"</div>
+                            <div class="phrase">"The chair rules that the motion is out of order because..."</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Resources Section -->
+                <section id="resources" class="section">
+                    <h2>Resources for POs</h2>
+                    
+                    <h3>Essential Documents</h3>
+                    <ul>
+                        <li><strong>Table of Parliamentary Motions</strong> (see Parliamentary Procedure section)</li>
+                        <li><strong>PO Tracking Sheet/Template</strong> (see Speaker Tracking section)</li>
+                        <li><strong>Legislation Templates</strong></li>
+                        <li><strong>Sample Dockets</strong></li>
+                        <li><strong>Judging Forms and Rubrics</strong></li>
+                    </ul>
+
+                    <h3>Research Sources</h3>
+                    <p>Understanding legislation content helps POs make better decisions:</p>
+                    <div class="highlight-box">
+                        <ul>
+                            <li><strong>cbo.gov</strong> - Congressional Budget Office</li>
+                            <li><strong>congress.gov</strong> - Official Congressional information</li>
+                            <li><strong>usa.gov</strong> - Official US government portal</li>
+                            <li><strong>federalreserve.gov</strong> - Federal Reserve</li>
+                            <li><strong>gao.gov</strong> - Government Accountability Office</li>
+                            <li><strong>ssa.gov</strong> - Social Security Administration</li>
+                            <li><strong>uscourts.gov</strong> - US Courts</li>
+                        </ul>
+                    </div>
+
+                    <h3>Key Reminders</h3>
+                    <div class="success-box">
+                        <ul>
+                            <li><strong>Fairness</strong> is your top priority</li>
+                            <li><strong>Efficiency</strong> keeps the round moving</li>
+                            <li><strong>Accuracy</strong> in parliamentary procedure builds trust</li>
+                            <li><strong>Preparation</strong> makes everything smoother</li>
+                            <li><strong>Confidence</strong> helps you lead effectively</li>
+                        </ul>
+                    </div>
+
+                    <h3>Emergency Contacts</h3>
+                    <div class="warning-box">
+                        <p>Always know how to reach tournament directors, tab room, or other officials if serious issues arise during your session.</p>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Navigation functionality
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to corresponding nav item
+            const activeNavItem = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+        }
+
+        // PO Control Panel System
+        let senators = [];
+        let selectedSenatorIndex = -1;
+        let currentMode = 'ready'; // 'ready', 'speech', 'questioning'
+        let timerInterval;
+        let questioningTimerInterval;
+        let timeRemaining = 180;
+        let questioningTimeRemaining = 30;
+        let isRunning = false;
+        let originalTime = 180;
+        let questioningQueue = [];
+        let currentQuestionerIndex = -1;
+        let isQuestioningMode = false;
+        let sessionStats = {
+            totalSpeeches: 0,
+            totalQuestions: 0,
+            currentLegislation: 'Item 1'
+        };
+
+        // Session Management
+        function initializeSession() {
+            const namesText = document.getElementById('senatorNames').value.trim();
+            if (!namesText) {
+                alert('Please enter senator names');
+                return;
+            }
+
+            const names = namesText.split('\n').filter(name => name.trim());
+            if (names.length === 0) {
+                alert('Please enter at least one senator name');
+                return;
+            }
+
+            // Initialize senators
+            senators = names.map((name, index) => ({
+                id: index,
+                name: name.trim(),
+                speeches: 0,
+                questions: 0,
+                lastSpeechTime: null,
+                lastQuestionTime: null,
+                isInQuestioningQueue: false
+            }));
+
+            // Hide setup, show active session
+            document.getElementById('setupPhase').style.display = 'none';
+            document.getElementById('activeSession').style.display = 'grid';
+
+            // Initialize displays
+            updateSenatorList();
+            updateTimerDisplay();
+            updateSessionStats();
+            updateCurrentActivity();
+            
+            // Reset button states
+            document.getElementById('pauseResumeBtn').textContent = '⏸️ Pause';
+        }
+
+        function resetSession() {
+            if (confirm('Are you sure you want to reset the entire session? This will clear all data.')) {
+                // Reset all data
+                senators = [];
+                selectedSenatorIndex = -1;
+                currentMode = 'ready';
+                questioningQueue = [];
+                currentQuestionerIndex = -1;
+                isQuestioningMode = false;
+                sessionStats = {
+                    totalSpeeches: 0,
+                    totalQuestions: 0,
+                    currentLegislation: 'Item 1'
+                };
+                
+                // Stop timer
+                pauseTimer();
+                
+                // Show setup, hide active session
+                document.getElementById('setupPhase').style.display = 'block';
+                document.getElementById('activeSession').style.display = 'none';
+                
+                // Clear setup form
+                document.getElementById('senatorNames').value = '';
+            }
+        }
+
+        // Timer System
+        function updateTimerDisplay() {
+            let displayTime;
+            if (timeRemaining < 0) {
+                const absTime = Math.abs(timeRemaining);
+                const minutes = Math.floor(absTime / 60);
+                const seconds = absTime % 60;
+                displayTime = `-${minutes}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                displayTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            document.getElementById('timerDisplay').textContent = displayTime;
+            
+            const statusElement = document.getElementById('timerStatus');
+            if (timeRemaining === 60 && originalTime > 60) {
+                statusElement.textContent = '⚠️ 1 MINUTE WARNING - 1 Gavel Tap';
+                statusElement.style.color = '#f39c12';
+            } else if (timeRemaining === 30 && originalTime > 30) {
+                statusElement.textContent = '⚠️ 30 SECONDS WARNING - 2 Gavel Taps';
+                statusElement.style.color = '#e67e22';
+            } else if (timeRemaining === 0) {
+                statusElement.textContent = '🔴 TIME ELAPSED - 3 Gavel Taps';
+                statusElement.style.color = '#e74c3c';
+                if (currentMode === 'speech') {
+                    // Auto-transition to questioning
+                    setTimeout(() => {
+                        startQuestioningTimer();
+                    }, 2000);
+                }
+            } else if (timeRemaining < 0 && timeRemaining >= -10) {
+                statusElement.textContent = `🔴 GRACE PERIOD: ${Math.abs(timeRemaining)}s over (Max 10s)`;
+                statusElement.style.color = '#c0392b';
+            } else if (timeRemaining <= -10) {
+                statusElement.textContent = '🔴 GRACE PERIOD ENDED - Multiple Gavel Taps';
+                statusElement.style.color = '#c0392b';
+                if (currentMode === 'speech') {
+                    // Only auto-pause for speeches, not questioning
+                    pauseTimer();
+                }
+            } else {
+                statusElement.textContent = isRunning ? '▶️ Timer Running' : '⏸️ Timer Paused';
+                statusElement.style.color = '#ffffff';
+            }
+        }
+
+        function startSpeechTimer() {
+            if (selectedSenatorIndex === -1) {
+                alert('Please select a senator first by clicking on their name in the list');
+                return;
+            }
+            
+            currentMode = 'speech';
+            timeRemaining = 180; // 3 minutes
+            originalTime = 180;
+            isRunning = true;
+            
+            // Show role selection
+            document.getElementById('speakerRoleSelection').style.display = 'block';
+            
+            updateCurrentActivity();
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function startQuestioningTimer() {
+            if (selectedSenatorIndex === -1) {
+                alert('Please select a speaker first');
+                return;
+            }
+            
+            currentMode = 'questioning';
+            
+            // Determine questioning time based on speech role
+            const speakerRole = document.getElementById('speakerRole').value;
+            let questioningTime = 60; // Default 1 minute
+            
+            if (speakerRole === 'author' || speakerRole === 'firstneg') {
+                questioningTime = 120; // 2 minutes
+            }
+            
+            timeRemaining = questioningTime;
+            originalTime = questioningTime;
+            isRunning = true;
+            
+            // Show questioning container and hide role selection
+            document.getElementById('questioningContainer').style.display = 'block';
+            document.getElementById('speakerRoleSelection').style.display = 'none';
+            
+            // Initialize questioning list
+            updateQuestionerList();
+            
+            updateCurrentActivity();
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0 && !isQuestioningMode) {
+                    // Automatically start questioning mode when time is up
+                    startQuestioningMode();
+                }
+            }, 1000);
+        }
+
+        function togglePauseResume() {
+            const btn = document.getElementById('pauseResumeBtn');
+            if (isRunning) {
+                // Pause
+                isRunning = false;
+                clearInterval(timerInterval);
+                clearInterval(questioningTimerInterval);
+                btn.textContent = '▶️ Resume';
+                updateTimerDisplay();
+            } else {
+                // Resume
+                isRunning = true;
+                btn.textContent = '⏸️ Pause';
+                
+                if (currentMode === 'speech' || currentMode === 'questioning') {
+                    timerInterval = setInterval(() => {
+                        timeRemaining--;
+                        updateTimerDisplay();
+                        
+                        if (timeRemaining <= 0 && currentMode === 'questioning' && !isQuestioningMode) {
+                            startQuestioningMode();
+                        }
+                    }, 1000);
+                }
+                
+                if (isQuestioningMode) {
+                    questioningTimerInterval = setInterval(() => {
+                        questioningTimeRemaining--;
+                        updateQuestionerTimer();
+                        
+                        if (questioningTimeRemaining <= 0) {
+                            nextQuestioner();
+                        }
+                    }, 1000);
+                }
+            }
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            clearInterval(questioningTimerInterval);
+            document.getElementById('pauseResumeBtn').textContent = '▶️ Resume';
+            updateTimerDisplay();
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            clearInterval(questioningTimerInterval);
+            timeRemaining = originalTime;
+            document.getElementById('pauseResumeBtn').textContent = '⏸️ Pause';
+            updateTimerDisplay();
+        }
+
+        // Senator Management
+        function updateSenatorList() {
+            // Sort senators by priority (precedence then recency)
+            const sortedSenators = [...senators].sort((a, b) => {
+                // First by speech count (precedence)
+                if (a.speeches !== b.speeches) {
+                    return a.speeches - b.speeches;
+                }
+                
+                // Then by recency (least recent first)
+                if (a.lastSpeechTime && b.lastSpeechTime) {
+                    return a.lastSpeechTime - b.lastSpeechTime;
+                } else if (a.lastSpeechTime) {
+                    return 1; // b goes first (never spoke)
+                } else if (b.lastSpeechTime) {
+                    return -1; // a goes first (never spoke)
+                }
+                
+                return 0; // Same priority
+            });
+
+            const listElement = document.getElementById('senatorList');
+            listElement.innerHTML = '';
+
+            sortedSenators.forEach((senator, sortedIndex) => {
+                const originalIndex = senators.findIndex(s => s.id === senator.id);
+                const isSelected = originalIndex === selectedSenatorIndex;
+                const isNext = sortedIndex === 0;
+
+                const item = document.createElement('div');
+                item.className = `senator-item ${isSelected ? 'selected' : ''} ${isNext ? 'next-priority' : ''}`;
+                item.onclick = () => selectSenator(originalIndex);
+
+                item.innerHTML = `
+                    <div class="senator-info">
+                        <div class="senator-name">${senator.name}</div>
+                        <div class="senator-stats">
+                            Speeches: ${senator.speeches} | Questions: ${senator.questions}
+                            ${senator.lastSpeechTime ? ` | Last spoke: ${new Date(senator.lastSpeechTime).toLocaleTimeString()}` : ''}
+                        </div>
+                    </div>
+                    <div class="priority-indicator ${isNext ? 'next' : ''}">
+                        ${isNext ? 'NEXT' : `#${sortedIndex + 1}`}
+                    </div>
+                `;
+
+                listElement.appendChild(item);
+            });
+        }
+
+        function selectSenator(index) {
+            selectedSenatorIndex = index;
+            updateSenatorList();
+            updateCurrentActivity();
+        }
+
+        function markSpeech() {
+            if (selectedSenatorIndex === -1) {
+                alert('Please select a senator first');
+                return;
+            }
+
+            const senator = senators[selectedSenatorIndex];
+            senator.speeches++;
+            senator.lastSpeechTime = Date.now();
+            sessionStats.totalSpeeches++;
+
+            // Reset for next speaker
+            currentMode = 'ready';
+            selectedSenatorIndex = -1;
+            pauseTimer();
+
+            updateSenatorList();
+            updateSessionStats();
+            updateCurrentActivity();
+        }
+
+        function markQuestion() {
+            if (selectedSenatorIndex === -1) {
+                alert('Please select a senator first');
+                return;
+            }
+
+            const senator = senators[selectedSenatorIndex];
+            senator.questions++;
+            senator.lastQuestionTime = Date.now();
+            sessionStats.totalQuestions++;
+
+            updateSenatorList();
+            updateSessionStats();
+        }
+
+        function updateCurrentActivity() {
+            const titleElement = document.getElementById('currentActivityTitle');
+            const speakerElement = document.getElementById('currentSpeaker');
+
+            if (selectedSenatorIndex === -1) {
+                titleElement.textContent = '🎤 Ready for Next Speaker';
+                speakerElement.textContent = 'Select a senator from the list below';
+            } else {
+                const senator = senators[selectedSenatorIndex];
+                if (currentMode === 'speech') {
+                    titleElement.textContent = '🎤 Speech in Progress';
+                    const roleElement = document.getElementById('speakerRole');
+                    if (roleElement) {
+                        const role = roleElement.value;
+                        const roleText = role === 'author' ? 'Author/Sponsor' : 
+                                       role === 'firstneg' ? 'First Negative' : 'Regular';
+                        speakerElement.textContent = `${senator.name} is speaking (${roleText})`;
+                    } else {
+                        speakerElement.textContent = `${senator.name} is speaking`;
+                    }
+                } else if (currentMode === 'questioning') {
+                    if (isQuestioningMode && currentQuestionerIndex !== -1) {
+                        titleElement.textContent = '❓ Questioning in Progress';
+                        const questioner = senators[currentQuestionerIndex];
+                        speakerElement.innerHTML = `
+                            <div>Speaker: ${senator.name}</div>
+                            <div style="margin-top: 8px; font-size: 0.9em;">Current Questioner: ${questioner.name} (${questioningTimeRemaining}s remaining)</div>
+                        `;
+                    } else {
+                        titleElement.textContent = '❓ Questioning Period Setup';
+                        speakerElement.textContent = `Questions for ${senator.name} - Select questioners from the list`;
+                    }
+                } else {
+                    titleElement.textContent = '🎤 Speaker Selected';
+                    speakerElement.textContent = `Ready to start: ${senator.name}`;
+                }
+            }
+        }
+
+        function updateSessionStats() {
+            document.getElementById('totalSpeeches').textContent = sessionStats.totalSpeeches;
+            document.getElementById('totalQuestions').textContent = sessionStats.totalQuestions;
+            document.getElementById('currentLegislation').textContent = sessionStats.currentLegislation;
+        }
+
+        // Questioning System
+        function updateQuestionerList() {
+            const listElement = document.getElementById('questionerList');
+            listElement.innerHTML = '';
+
+            // Sort questioners by priority (questions asked, then recency)
+            const availableQuestioners = senators.filter(s => s.id !== selectedSenatorIndex);
+            const sortedQuestioners = [...availableQuestioners].sort((a, b) => {
+                // First by question count (precedence - fewer questions first)
+                if (a.questions !== b.questions) {
+                    return a.questions - b.questions;
+                }
+                
+                // Then by recency (least recent first, most recent last)
+                if (a.lastQuestionTime && b.lastQuestionTime) {
+                    return a.lastQuestionTime - b.lastQuestionTime; // Earlier time comes first
+                } else if (a.lastQuestionTime && !b.lastQuestionTime) {
+                    return 1; // b goes first (never asked)
+                } else if (!a.lastQuestionTime && b.lastQuestionTime) {
+                    return -1; // a goes first (never asked)
+                }
+                
+                return 0; // Same priority
+            });
+
+            sortedQuestioners.forEach((senator, sortedIndex) => {
+                const originalIndex = senators.findIndex(s => s.id === senator.id);
+                const isSelected = senator.isInQuestioningQueue;
+                const isActive = currentQuestionerIndex === originalIndex;
+                const isNext = sortedIndex === 0 && !isQuestioningMode;
+
+                const item = document.createElement('div');
+                item.className = `senator-item ${isSelected ? 'questioning-selected' : ''} ${isActive ? 'questioning-active' : ''} ${isNext ? 'next-priority' : ''}`;
+                item.onclick = () => toggleQuestioningQueue(originalIndex);
+
+                item.innerHTML = `
+                    <div class="senator-info">
+                        <div class="senator-name">${senator.name}</div>
+                        <div class="senator-stats">
+                            Questions: ${senator.questions}
+                            ${senator.lastQuestionTime ? ` | Last asked: ${new Date(senator.lastQuestionTime).toLocaleTimeString()}` : ''}
+                        </div>
+                    </div>
+                    <div class="priority-indicator ${isNext ? 'next' : ''}">
+                        ${isActive ? 'ASKING' : isSelected ? 'QUEUED' : isNext ? 'NEXT' : `#${sortedIndex + 1}`}
+                    </div>
+                `;
+
+                listElement.appendChild(item);
+            });
+        }
+
+        function toggleQuestioningQueue(senatorIndex) {
+            const senator = senators[senatorIndex];
+            senator.isInQuestioningQueue = !senator.isInQuestioningQueue;
+            
+            if (senator.isInQuestioningQueue) {
+                questioningQueue.push(senatorIndex);
+            } else {
+                questioningQueue = questioningQueue.filter(index => index !== senatorIndex);
+                if (currentQuestionerIndex === senatorIndex) {
+                    nextQuestioner();
+                }
+            }
+            
+            updateQuestionerList();
+        }
+
+        function startQuestioningMode() {
+            if (questioningQueue.length === 0) {
+                alert('Please select senators for questioning first by clicking on their names');
+                return;
+            }
+            
+            isQuestioningMode = true;
+            currentQuestionerIndex = questioningQueue[0];
+            questioningTimeRemaining = 30;
+            
+            // Show current questioner
+            document.getElementById('currentQuestioner').style.display = 'block';
+            updateCurrentQuestioner();
+            
+            // Start 30-second timer for current questioner
+            questioningTimerInterval = setInterval(() => {
+                questioningTimeRemaining--;
+                updateQuestionerTimer();
+                
+                if (questioningTimeRemaining <= 0) {
+                    nextQuestioner();
+                }
+            }, 1000);
+            
+            updateQuestionerList();
+            updateCurrentActivity();
+        }
+
+        function nextQuestioner() {
+            if (currentQuestionerIndex !== -1) {
+                // Mark question for current questioner
+                const senator = senators[currentQuestionerIndex];
+                senator.questions++;
+                senator.lastQuestionTime = Date.now();
+                senator.isInQuestioningQueue = false;
+                sessionStats.totalQuestions++;
+                
+                // Remove from queue
+                questioningQueue = questioningQueue.filter(index => index !== currentQuestionerIndex);
+            }
+            
+            // Move to next questioner
+            if (questioningQueue.length > 0) {
+                currentQuestionerIndex = questioningQueue[0];
+                questioningTimeRemaining = 30;
+                updateCurrentQuestioner();
+            } else {
+                // No more questioners
+                endQuestioningMode();
+                return;
+            }
+            
+            updateQuestionerList();
+            updateSessionStats();
+        }
+
+        function endQuestioningMode() {
+            isQuestioningMode = false;
+            currentQuestionerIndex = -1;
+            clearInterval(questioningTimerInterval);
+            
+            // Clear all questioning selections
+            senators.forEach(senator => {
+                senator.isInQuestioningQueue = false;
+            });
+            questioningQueue = [];
+            
+            // Hide questioning displays
+            document.getElementById('currentQuestioner').style.display = 'none';
+            document.getElementById('questioningContainer').style.display = 'none';
+            
+            // Reset for next speaker
+            currentMode = 'ready';
+            selectedSenatorIndex = -1;
+            pauseTimer();
+            
+            updateQuestionerList();
+            updateSenatorList();
+            updateCurrentActivity();
+        }
+
+        function updateCurrentQuestioner() {
+            if (currentQuestionerIndex !== -1) {
+                const questioner = senators[currentQuestionerIndex];
+                document.getElementById('questionerName').textContent = questioner.name;
+            }
+        }
+
+        function updateQuestionerTimer() {
+            document.getElementById('questionerTimer').textContent = `${questioningTimeRemaining}s`;
+        }
+
+        // Search functionality for phrases
+        function searchPhrases() {
+            const searchTerm = document.getElementById('phraseSearch').value.toLowerCase();
+            const phrases = document.querySelectorAll('.phrase');
+            const categories = document.querySelectorAll('.phrase-category');
+            
+            categories.forEach(category => {
+                let hasVisiblePhrase = false;
+                const categoryPhrases = category.querySelectorAll('.phrase');
+                
+                categoryPhrases.forEach(phrase => {
+                    if (phrase.textContent.toLowerCase().includes(searchTerm)) {
+                        phrase.style.display = 'block';
+                        hasVisiblePhrase = true;
+                    } else {
+                        phrase.style.display = 'none';
+                    }
+                });
+                
+                category.style.display = hasVisiblePhrase ? 'block' : 'none';
+            });
+        }
+
+        // Initialize timer display
+        updateTimerDisplay();
+    </script>
+</body>
+</html>
+
